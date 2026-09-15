@@ -608,16 +608,15 @@ export function scaleNutrition(food: FoodItem, grams: number): ScaledNutrition {
 }
 
 /**
- * Fetches real-time suggestions while user is typing.
- * Tries FastAPI backend (/api/v1/foods/suggestions), with local fallback.
+ * Fetches suggestions from the same-origin Next.js Route Handler.
+ * Third-party credentials and fallback order remain server-side.
  */
 export async function fetchFoodSuggestions(query: string): Promise<string[]> {
   const q = query.trim();
   if (!q) return [];
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const res = await fetch(`${apiUrl}/api/v1/foods/suggestions?q=${encodeURIComponent(q)}&limit=7`);
+    const res = await fetch(`/api/foods/suggestions?q=${encodeURIComponent(q)}&limit=7`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -638,20 +637,19 @@ export async function fetchFoodSuggestions(query: string): Promise<string[]> {
 }
 
 /**
- * Searches foods via backend (FatSecret -> USDA -> Local), falling back to local catalog.
+ * Searches through the server-side Route Handler (FatSecret -> USDA -> verified catalog).
  */
 export async function searchFoodsApi(query?: string, category?: string): Promise<FoodSummary[]> {
   const q = query ? query.trim() : "";
   const cat = category && category !== "All" ? category.trim() : "";
 
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (cat) params.set("category", cat);
     params.set("limit", "25");
 
-    const res = await fetch(`${apiUrl}/api/v1/foods/search?${params.toString()}`);
+    const res = await fetch(`/api/foods/search?${params.toString()}`);
     if (res.ok) {
       const data = await res.json();
       if (data.items && Array.isArray(data.items) && data.items.length > 0) {
@@ -690,12 +688,11 @@ export async function searchFoodsApi(query?: string, category?: string): Promise
 }
 
 /**
- * Fetches complete food details with servings from backend or local catalog.
+ * Fetches complete food details with servings from the server-side Route Handler.
  */
 export async function fetchFoodDetailApi(foodId: string): Promise<FoodItem | null> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    const res = await fetch(`${apiUrl}/api/v1/foods/${encodeURIComponent(foodId)}`);
+    const res = await fetch(`/api/foods/${encodeURIComponent(foodId)}`);
     if (res.ok) {
       return await res.json();
     }
@@ -706,4 +703,3 @@ export async function fetchFoodDetailApi(foodId: string): Promise<FoodItem | nul
   const localMatch = VERIFIED_FOOD_CATALOG.find((f) => f.id === foodId);
   return localMatch || null;
 }
-

@@ -4,12 +4,9 @@
   "private": true,
   "description": "Calzy - Precision Nutrition & Calorie Tracking Web Application",
   "scripts": {
-    "dev:frontend": "npm run dev --prefix frontend",
-    "dev:backend": "python -m uvicorn app.main:app --reload --app-dir backend --port 8000",
-    "build:frontend": "npm run build --prefix frontend",
-    "lint:frontend": "npm run lint --prefix frontend",
-    "typecheck:frontend": "npm run typecheck --prefix frontend",
-    "test:frontend": "npm run test --prefix frontend",
-    "test:backend": "python -m pytest backend/tests"
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "typecheck": "npm run typecheck --prefix frontend"
   }
 }
