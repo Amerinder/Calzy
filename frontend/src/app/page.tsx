@@ -8,7 +8,6 @@ import {
   Flame,
   Search,
   Calendar,
-  CheckCircle2,
   Calculator,
 } from "lucide-react";
 
@@ -178,17 +177,6 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* Phase Status Pill */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-3 flex items-center justify-between text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-medium">Phase 0 Foundation Active</span>
-          </div>
-          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-            v0.1.0
-          </span>
-        </div>
       </div>
     </AppShell>
   );

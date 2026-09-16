@@ -51,8 +51,16 @@ export interface ScaledNutrition {
   carbs_g: number;
   fat_g: number;
   fiber_g: number;
+  net_carbs_g: number;
   sugar_g: number;
   sodium_mg: number;
+  potassium_mg?: number;
+  calcium_mg?: number;
+  iron_mg?: number;
+  protein_pct: number;
+  carbs_pct: number;
+  fat_pct: number;
+  micronutrients?: Record<string, number>;
 }
 
 /**
@@ -586,6 +594,58 @@ export const VERIFIED_FOOD_CATALOG: FoodItem[] = [
       { id: "s-milk-3", label: "1 splash / tbsp (15g)", grams: 15, unit_type: "tbsp", quantity: 1 },
     ],
   },
+  {
+    id: "f82b1c45-92a1-4328-98e1-d21798ecba01",
+    name: "Farmhouse Pizza (Veggie Loaded with Onion, Capsicum, Tomato & Mushroom)",
+    category: "Meals & Fast Food",
+    source: "Verified Food Database",
+    external_id: "CALZY:PIZZA-FH",
+    brand: null,
+    default_unit: "slice",
+    nutrition: {
+      basis_grams: 100,
+      calories: 245,
+      protein_g: 9.2,
+      carbs_g: 28.5,
+      fat_g: 10.4,
+      fiber_g: 2.1,
+      sugar_g: 3.2,
+      sodium_mg: 480,
+      micronutrients: { calcium_mg: 180, iron_mg: 1.4, potassium_mg: 190 },
+    },
+    servings: [
+      { id: "s-fhp-1", label: "1 medium slice (105g)", grams: 105, unit_type: "slice", quantity: 1 },
+      { id: "s-fhp-2", label: "2 slices (210g)", grams: 210, unit_type: "portion", quantity: 2 },
+      { id: "s-fhp-3", label: "1 small whole pizza (260g)", grams: 260, unit_type: "portion", quantity: 1 },
+      { id: "s-fhp-4", label: "100g portion", grams: 100, unit_type: "weight_g", quantity: 1 },
+    ],
+  },
+  {
+    id: "c91e3f84-71bc-4991-88dc-91384029314a",
+    name: "Vegetable Pulao / Matar Pulao (Basmati Rice with Veggies & Spices)",
+    category: "Grains & Cereals",
+    source: "Verified Food Database",
+    external_id: "CALZY:PULAO-VEG",
+    brand: null,
+    default_unit: "bowl",
+    nutrition: {
+      basis_grams: 100,
+      calories: 154,
+      protein_g: 3.4,
+      carbs_g: 28.2,
+      fat_g: 3.2,
+      fiber_g: 2.3,
+      sugar_g: 1.2,
+      sodium_mg: 260,
+      micronutrients: { potassium_mg: 115, iron_mg: 0.9, calcium_mg: 22 },
+    },
+    servings: [
+      { id: "s-pul-1", label: "1 katori / bowl (150g)", grams: 150, unit_type: "bowl", quantity: 1 },
+      { id: "s-pul-2", label: "1 full plate (250g)", grams: 250, unit_type: "plate", quantity: 1 },
+      { id: "s-pul-3", label: "1 cup cooked (180g)", grams: 180, unit_type: "cup", quantity: 1 },
+      { id: "s-pul-4", label: "100g portion", grams: 100, unit_type: "weight_g", quantity: 1 },
+    ],
+  },
 ];
 
 /**
@@ -594,16 +654,52 @@ export const VERIFIED_FOOD_CATALOG: FoodItem[] = [
  */
 export function scaleNutrition(food: FoodItem, grams: number): ScaledNutrition {
   const nut = food.nutrition;
-  const ratio = Math.max(0, grams) / 100.0;
+  const safeGrams = Math.max(0, isNaN(grams) ? 0 : grams);
+  const ratio = safeGrams / 100.0;
+
+  const calories = Math.round(nut.calories * ratio);
+  const protein_g = Math.round(nut.protein_g * ratio * 10) / 10;
+  const carbs_g = Math.round(nut.carbs_g * ratio * 10) / 10;
+  const fat_g = Math.round(nut.fat_g * ratio * 10) / 10;
+  const fiber_g = Math.round(nut.fiber_g * ratio * 10) / 10;
+  const net_carbs_g = Math.max(0, Math.round((carbs_g - fiber_g) * 10) / 10);
+  const sugar_g = Math.round(nut.sugar_g * ratio * 10) / 10;
+  const sodium_mg = Math.round(nut.sodium_mg * ratio * 10) / 10;
+
+  const proteinKcal = protein_g * 4;
+  const carbsKcal = carbs_g * 4;
+  const fatKcal = fat_g * 9;
+  const totalMacroKcal = Math.max(1, proteinKcal + carbsKcal + fatKcal);
+
+  const protein_pct = Math.round((proteinKcal / totalMacroKcal) * 100);
+  const carbs_pct = Math.round((carbsKcal / totalMacroKcal) * 100);
+  const fat_pct = Math.max(0, 100 - protein_pct - carbs_pct);
+
+  const scaledMicros: Record<string, number> = {};
+  if (nut.micronutrients) {
+    for (const [key, val] of Object.entries(nut.micronutrients)) {
+      if (typeof val === "number") {
+        scaledMicros[key] = Math.round(val * ratio * 100) / 100;
+      }
+    }
+  }
 
   return {
-    calories: Math.round(nut.calories * ratio),
-    protein_g: Math.round(nut.protein_g * ratio * 10) / 10,
-    carbs_g: Math.round(nut.carbs_g * ratio * 10) / 10,
-    fat_g: Math.round(nut.fat_g * ratio * 10) / 10,
-    fiber_g: Math.round(nut.fiber_g * ratio * 10) / 10,
-    sugar_g: Math.round(nut.sugar_g * ratio * 10) / 10,
-    sodium_mg: Math.round(nut.sodium_mg * ratio * 10) / 10,
+    calories,
+    protein_g,
+    carbs_g,
+    fat_g,
+    fiber_g,
+    net_carbs_g,
+    sugar_g,
+    sodium_mg,
+    potassium_mg: scaledMicros.potassium_mg,
+    calcium_mg: scaledMicros.calcium_mg,
+    iron_mg: scaledMicros.iron_mg,
+    protein_pct,
+    carbs_pct,
+    fat_pct,
+    micronutrients: scaledMicros,
   };
 }
 
@@ -636,23 +732,36 @@ export async function fetchFoodSuggestions(query: string): Promise<string[]> {
   return Array.from(new Set(matched)).slice(0, 7);
 }
 
+const clientSearchCache = new Map<string, FoodSummary[]>();
+const clientDetailCache = new Map<string, FoodItem>();
+
 /**
  * Searches through the server-side Route Handler (FatSecret -> USDA -> verified catalog).
  */
 export async function searchFoodsApi(query?: string, category?: string): Promise<FoodSummary[]> {
   const q = query ? query.trim() : "";
   const cat = category && category !== "All" ? category.trim() : "";
+  const cacheKey = `${q.toLowerCase()}::${cat}`;
+
+  if (clientSearchCache.has(cacheKey)) {
+    return clientSearchCache.get(cacheKey)!;
+  }
 
   try {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (cat) params.set("category", cat);
-    params.set("limit", "25");
+    params.set("limit", "100");
 
     const res = await fetch(`/api/foods/search?${params.toString()}`);
     if (res.ok) {
       const data = await res.json();
-      if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+      if (data.items && Array.isArray(data.items)) {
+        clientSearchCache.set(cacheKey, data.items);
+        if (clientSearchCache.size > 200) {
+          const oldest = clientSearchCache.keys().next().value;
+          if (oldest) clientSearchCache.delete(oldest);
+        }
         return data.items;
       }
     }
@@ -661,7 +770,7 @@ export async function searchFoodsApi(query?: string, category?: string): Promise
   }
 
   // Local catalog search fallback
-  return VERIFIED_FOOD_CATALOG.filter((f) => {
+  const fallback = VERIFIED_FOOD_CATALOG.filter((f) => {
     if (cat && f.category !== cat) return false;
     if (q) {
       const qLower = q.toLowerCase();
@@ -685,16 +794,29 @@ export async function searchFoodsApi(query?: string, category?: string): Promise
     fiber_per_100g: f.nutrition.fiber_g,
     servings_count: f.servings.length,
   }));
+
+  if (fallback.length > 0) {
+    clientSearchCache.set(cacheKey, fallback);
+  }
+  return fallback;
 }
 
 /**
  * Fetches complete food details with servings from the server-side Route Handler.
  */
 export async function fetchFoodDetailApi(foodId: string): Promise<FoodItem | null> {
+  if (clientDetailCache.has(foodId)) {
+    return clientDetailCache.get(foodId)!;
+  }
+
   try {
     const res = await fetch(`/api/foods/${encodeURIComponent(foodId)}`);
     if (res.ok) {
-      return await res.json();
+      const item = await res.json();
+      if (item && item.id) {
+        clientDetailCache.set(foodId, item);
+        return item;
+      }
     }
   } catch {
     // Fallback to local catalog below

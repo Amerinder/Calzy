@@ -19,17 +19,18 @@ import { CalculatedTargets } from "@/lib/calculator";
 export default function DashboardPage() {
   const [currentDate, setCurrentDate] = useState("Today, 15 Apr 2026");
   const [isDemoOverTarget, setIsDemoOverTarget] = useState(false);
-  const [activeTarget, setActiveTarget] = useState<CalculatedTargets | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const saved = localStorage.getItem("calzy_active_target");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [activeTarget, setActiveTarget] = useState<CalculatedTargets | null>(null);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem("calzy_active_target");
+      if (saved) {
+        setActiveTarget(JSON.parse(saved));
+      }
+    } catch {
+      // ignore
+    }
+
     // If Supabase is configured, fetch live daily target snapshot
     if (isSupabaseConfigured) {
       const supabase = createClient();
