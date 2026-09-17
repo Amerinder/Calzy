@@ -55,6 +55,7 @@ function AddFoodContent() {
 
   const initialMeal = searchParams.get("meal") || "breakfast";
   const initialQuery = searchParams.get("q") || "";
+  const activeDate = searchParams.get("date") || "";
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -283,9 +284,11 @@ function AddFoodContent() {
     } else {
       saveRecentSearch(summary.name.split("(")[0].trim());
     }
-    router.push(
-      `/food/${encodeURIComponent(summary.id)}?meal=${selectedMeal}&q=${encodeURIComponent(searchQuery)}`
-    );
+    const params = new URLSearchParams();
+    params.set("meal", selectedMeal);
+    if (searchQuery) params.set("q", searchQuery);
+    if (activeDate) params.set("date", activeDate);
+    router.push(`/food/${encodeURIComponent(summary.id)}?${params.toString()}`);
   };
 
   // Filtered displayed foods based on active tab
@@ -589,9 +592,11 @@ function AddFoodContent() {
               <div
                 key={item.id}
                 onClick={() => {
-                  router.push(
-                    `/food/${encodeURIComponent(item.food_id)}?meal=${item.meal}&q=${encodeURIComponent(searchQuery)}`
-                  );
+                  const params = new URLSearchParams();
+                  params.set("meal", item.meal);
+                  if (searchQuery) params.set("q", searchQuery);
+                  if (activeDate) params.set("date", activeDate);
+                  router.push(`/food/${encodeURIComponent(item.food_id)}?${params.toString()}`);
                 }}
                 className="p-3.5 rounded-2xl bg-white border border-slate-100 hover:border-emerald-300 hover:shadow-2xs transition-all cursor-pointer flex items-center justify-between"
               >

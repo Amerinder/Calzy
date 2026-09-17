@@ -6,7 +6,7 @@ Calzy is a mobile-first calorie and macronutrient tracking web application desig
 
 ## Current Phase & Phase Status
 
-Calzy is engineered incrementally in strict numbered phases. **Phase 5 is complete.**
+Calzy is engineered incrementally in strict numbered phases. **Phase 6 is complete.**
 
 | Phase | Title | Status | Scope Delivered |
 | :--- | :--- | :---: | :--- |
@@ -15,8 +15,8 @@ Calzy is engineered incrementally in strict numbered phases. **Phase 5 is comple
 | **Phase 2** | Supabase Auth & User Profiles | **Complete** | Supabase Auth integration (email/password), session persistence, protected route middleware, onboarding questionnaire (age, gender, height, weight, activity, goal), and user profile table. |
 | **Phase 3** | Calorie Calculator & Daily Targets | **Complete** | Tested Mifflin-St Jeor calculation service, activity multipliers, goal adjustments (-500/+350 kcal), gender safety floors (1200/1500 kcal), macro ratio allocation, persistent `daily_targets` snapshots, and unit tests. |
 | **Phase 4** | Food Database & Nutrition Pipeline | **Complete** | Relational catalog schema (`foods`, `food_nutrition`, `servings`), 21-item verified seed dataset (USDA + ICMR-NIN IFCT 2017), server-side Next.js Route Handlers (`/api/foods/search`, `/api/foods/suggestions`, `/api/foods/[foodId]`), Supabase database integration, dual FatSecret & USDA live search fallback, and user's past 5 searches tracking. |
-| **Phase 5** | Food Search & Quantity Selection | **Complete** | Complete user-facing food logging selection flow: unit-aware portion selectors (pieces, rotis, eggs, cups, ml, grams), multiplier steppers, custom quantity control with bounds validation (1g-5,000g), live scaled macronutrient & micronutrient breakdown (protein, carbs, fat, fiber, net carbs, sodium, potassium, calcium, iron, sugars), review before logging stage, favorites bookmarking, recent logged foods, backend `/api/foods/calculate` endpoint, automated scaling tests, and clean headerless search history chips. |
-| **Phase 6** | Meal Logging & Real-time Totals | *Planned* | Persistent `meals` and `meal_items` tables, live dashboard aggregation, and nutritional snapshots. |
+| **Phase 5** | Food Search & Quantity Selection | **Complete** | Complete user-facing food logging selection flow: dedicated `/food/[foodId]` page, unit-aware portion selectors, multiplier steppers, custom quantity control (1g-5,000g), live scaled nutrition facts, favorites, recent logged foods, `/api/foods/calculate`, automated scaling tests, low-latency search caching, and clean headerless search chips. |
+| **Phase 6** | Meal Logging & Real-time Totals | **Complete** | Persistent `meals` and `meal_items` schema with RLS, immutable nutrition snapshots, live dashboard aggregation, dynamic Calorie Anchor updates, real-time protein/carbs/fat progress bars, interactive meal cards, item deletion, and automated test suite. |
 | **Phase 7** | Historical Calendar & Daily Views | *Planned* | Interactive monthly calendar, past-date inspection, and date-specific meal edits. |
 | **Phase 8** | Favorites, Recents & Custom Foods | *Planned* | User-defined custom recipes, persistent database favorites, and historical meal templates. |
 | **Phase 9** | Profile, Goals & Weight Tracking | *Planned* | Weight history charts, target recalculation workflows, and monthly nutrition insights. |
@@ -40,7 +40,8 @@ Calzy is engineered incrementally in strict numbered phases. **Phase 5 is comple
 | **Detailed Nutrition Facts & Micros** | Completed | Live breakdown of calories, protein, carbs, net carbs, fat, fiber, sodium, potassium, calcium, iron, and sugar. |
 | **Pre-Log Food Review Stage** | Completed | Review card detailing target meal, exact selected portion, gram equivalent, and scaled macros before adding. |
 | **Favorites & Recent Logged Foods** | Completed | Bookmarking daily staples and tracking recently logged items with fallback recommendations. |
-| **Meal Logging & Dashboard Totals** | Planned | Phase 6: Saving meal items to Breakfast, Lunch, Snacks, and Dinner with live ring updates. |
+| **Meal Logging & Dynamic Totals** | Completed | Live logging to Breakfast, Lunch, Snacks, Dinner with immutable snapshots and interactive deletion. |
+| **Reactive Progress Bars & Calorie Ring** | Completed | Dynamic Calorie Ring, Protein, Carbs, and Fat progress bars recalculate instantly when items are added/removed. |
 | **Historical Calendar Logging** | Planned | Phase 7: Browsing and editing past logs across months. |
 
 ---

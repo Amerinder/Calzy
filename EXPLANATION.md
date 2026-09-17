@@ -349,12 +349,44 @@ To eliminate 5–10 second external network delays when searching:
 
 ---
 
-## 13. Known Tradeoffs, Assumptions & Future Improvements
+## 13. What Was Changed & Engineered in Phase 6
+
+In strict alignment with **Phase 6** of the specification:
+1. **Relational Meals Schema & Migration (`004_create_meals.sql`)**:
+   - Built `meals` table with a unique composite constraint `(user_id, date, meal_type)`.
+   - Built `meal_items` child table storing individual logged entries tied to their meal container.
+   - Enforced strict PostgreSQL Row-Level Security (RLS) guaranteeing user isolation (User A cannot inspect or modify User B's meals).
+2. **Immutable Nutrition Snapshots**:
+   - Each logged `meal_item` stores an immutable `nutrition_snapshot` JSONB object capturing exact calories, protein, carbs, fat, fiber, net carbs, and micronutrients at the moment of logging.
+   - Historical logs remain 100% auditable and mathematically stable even if underlying catalog definitions are edited in the future.
+3. **Reactive Real-Time Dashboard Aggregation**:
+   - Connected `getDailyMeals(date)` to the active date on `/dashboard`.
+   - Built pure deterministic aggregation in `aggregateDailyTotals`:
+     $$\text{Daily Total} = \sum_{\text{items}} \text{snapshot values}$$
+   - When any food is logged from `/food/[foodId]` or deleted on `/dashboard`, `window.dispatchEvent(new Event("calzy_meals_updated"))` triggers an immediate reactive re-render of all dashboard indicators without requiring a page reload.
+4. **Dynamic Calorie Ring & Over-Target States**:
+   - The SVG Calorie Anchor now computes:
+     $$\text{Remaining} = \text{Target} - \text{Consumed}$$
+   - When $\text{Consumed} \le \text{Target}$, the ring displays an emerald progress arc and remaining calories.
+   - When $\text{Consumed} > \text{Target}$, the ring transitions to an amber/rose alert state displaying the exact overage ($+\text{X kcal}$ over target) gracefully.
+5. **Real-Time Macronutrient Progress Bars**:
+   - Protein ($3.5\text{ g/100g}$ Blue arc), Carbs ($42.3\text{ g/100g}$ Amber arc), and Fat ($4.8\text{ g/100g}$ Rose arc) progress bars dynamically fill and recalculate their percentage completion as items are added or deleted.
+6. **Interactive Meal Cards & Item Deletion**:
+   - Upgraded `MealCard.tsx` to display real-time calorie tallies for Breakfast, Lunch, Snacks, and Dinner.
+   - Expanding a meal reveals every logged food with its specific portion modifier (e.g., `1 katori (150g)`), gram weight, and macro breakdown.
+   - Added a trash icon button allowing users to delete any item with an immediate decrement of meal totals, daily calories, and macro progress bars.
+7. **Automated Test Suite (`src/lib/__tests__/meals.test.mjs`)**:
+   - Automated tests verify zero-state handling, multi-item category aggregation, date isolation, instant deletion mathematics, and over-target handling. All 15 tests pass.
+
+---
+
+## 14. Known Tradeoffs, Assumptions & Future Improvements
 
 | Area | Decision Made | Rationale | Future Improvement |
 | :--- | :--- | :--- | :--- |
 | **Catalog Storage** | Hybrid Supabase DB + verified local array | Ensures the app functions 100% offline or without API keys while leveraging database records when connected. | Add an admin migration worker to batch ingest USDA Foundation datasets into Supabase. |
 | **Search Caching** | Server in-memory LRU + Client Map | Slashes search latency from 6,000ms down to 20-30ms, protecting external API rate limits. | Add Redis/KV caching in production edge deployment. |
+| **Meal Persistence** | Hybrid Supabase + `localStorage` mirror | Provides authenticated multi-device sync with RLS while allowing offline/demo logging with zero friction. | Add background sync queue to push offline entries to Supabase once online. |
 | **Search History** | Headerless `localStorage` chips | Immediate, zero latency, clean UI without redundant text headings, private to the device. | Sync recent searches to Supabase `user_history` table in Phase 8. |
 | **Favorites & Recents** | Client storage cache | Fast, responsive 0ms rendering for daily staples without unnecessary database roundtrips during search. | Persist user favorites to `user_favorite_foods` table in Phase 8. |
-| **Meal Persistence** | Scoped to Phase 6 | Strictly adheres to the phased build specification, keeping Phase 5 focused on food selection and validation. | Implement Phase 6 `meals` and `meal_items` persistence. |
+| **Historical Calendar** | Scoped to Phase 7 | Strictly adheres to the phased build specification, keeping Phase 6 focused on meal logging and daily progress. | Implement interactive monthly calendar and historical daily editing in Phase 7. |

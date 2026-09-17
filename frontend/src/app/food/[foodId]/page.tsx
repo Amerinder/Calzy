@@ -10,6 +10,7 @@ import {
   scaleNutrition,
   fetchFoodDetailApi,
 } from "@/lib/api/foods";
+import { logMealItem, getTodayDateString, MealType } from "@/lib/api/meals";
 import {
   ArrowLeft,
   Scale,
@@ -167,18 +168,35 @@ export default function FoodDetailPage({
     return scaleNutrition(food, activeGrams);
   }, [food, activeGrams]);
 
-  const handleSaveToMeal = () => {
+  const targetDate = searchParams.get("date") || getTodayDateString();
+
+  const handleSaveToMeal = async () => {
     if (!food || !scaledNutrients || activeGrams <= 0) return;
 
+    const portionLabel = isCustomMode
+      ? `${activeGrams}${customUnit} custom`
+      : `${quantityMultiplier}x ${selectedServing?.label || "100g"} (${activeGrams}g)`;
+
+    // 1. Log to the meals store with immutable nutrition snapshot
+    await logMealItem({
+      date: targetDate,
+      meal_type: selectedMeal as MealType,
+      food_id: food.id,
+      name: food.name,
+      portion_label: portionLabel,
+      grams: activeGrams,
+      quantity: isCustomMode ? 1 : quantityMultiplier,
+      nutrition_snapshot: scaledNutrients,
+    });
+
+    // 2. Record in recent logged foods for fast 1-click re-logging
     const entry: RecentLoggedEntry = {
       id: `${food.id}-${Date.now()}`,
       food_id: food.id,
       name: food.name,
       category: food.category,
       meal: selectedMeal,
-      portion_label: isCustomMode
-        ? `${activeGrams}${customUnit} custom`
-        : `${quantityMultiplier}x ${selectedServing?.label || "100g"} (${activeGrams}g)`,
+      portion_label: portionLabel,
       grams: activeGrams,
       calories: scaledNutrients.calories,
       protein_g: scaledNutrients.protein_g,
@@ -200,9 +218,9 @@ export default function FoodDetailPage({
     setIsLogged(true);
     setTimeout(() => {
       setIsLogged(false);
-      // Return seamlessly to Add Food or Dashboard
-      router.push(`/add-food?meal=${selectedMeal}&q=${encodeURIComponent(returnQuery)}`);
-    }, 1800);
+      // Seamlessly navigate to Dashboard to inspect the updated progress bars
+      router.push("/dashboard");
+    }, 1200);
   };
 
   const backUrl = `/add-food?meal=${selectedMeal}${returnQuery ? `&q=${encodeURIComponent(returnQuery)}` : ""}`;
